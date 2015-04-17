@@ -1,0 +1,32 @@
+---
+
+- name: Ensure denyhosts folders are exists
+  file: state=directory path={{item}}
+  with_items:
+  - "{{denyhosts_work_dir}}"
+  - "{{denyhosts_run_dir}}"
+  - "{{denyhosts_log_dir}}"
+  - "{{denyhosts_etc_dir}}"
+
+- name: Download denyhosts
+  get_url: url={{denyhosts_url}} dest={{denyhosts_prefix}}/denyhosts-{{denyhosts_version}}.tar.gz
+
+- name: Install denyhosts
+  pip:  name='file://{{denyhosts_prefix}}/denyhosts-{{denyhosts_version}}.tar.gz' executable=pip2
+
+- name: Configure denyhosts
+  template: src=denyhosts.conf.j2 dest={{denyhosts_etc_dir}}/denyhosts.conf
+  notify: denyhosts restart
+
+- name: Configure service
+  template: src=init.d.j2 dest=/etc/init.d/denyhosts mode=0755
+  notify: denyhosts restart
+  when: denyhosts_daemon
+
+- name: Ensure the service is started
+  service: name=denyhosts state=started
+  when: denyhosts_daemon
+
+- name: Configure cron
+  template: src=cron.j2 dest=/etc/cron.d/denyhosts
+  when: not denyhosts_daemon

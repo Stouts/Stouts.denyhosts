@@ -1,0 +1,9 @@
+---
+
+- name: denyhosts restart
+  service: name=denyhosts state=restarted
+  when: denyhosts_daemon
+
+- name: denyhosts reload
+  service: name=denyhosts state=reloaded
+  when: denyhosts_daemon
